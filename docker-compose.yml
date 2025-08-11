@@ -40,7 +40,7 @@ services:
       - VECTOR_DB_NAME=vector_store
       - VECTOR_DB_USER=postgres
       - VECTOR_DB_PASSWORD=password
-      - GOOGLE_API_KEY=AIzaSyDGzKk_AgIlFy3B9DnSDXZSTz5LhCdG-5U
+      - GOOGLE_API_KEY=AIzaSyCTi6noUn6qtj_bwRHPSNMB-hGkbfUhyk4
       - GEMINI_MODEL=gemini-1.5-flash
       - SECRET_KEY=${SECRET_KEY}
       - ALLOWED_ORIGINS=http://localhost:8888,http://localhost:9000,http://localhost:8000,file://*

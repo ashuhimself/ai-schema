@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking Analytics - Demo Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1400px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .panel { background: white; border: none; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .demo-queries { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px; }
+        .query-button { background: #667eea; color: white; border: none; padding: 8px 15px; margin: 5px; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .query-button:hover { background: #5a6fd8; }
+        .query-button.nl { background: #764ba2; }
+        .query-button.nl:hover { background: #684397; }
+        textarea { width: 100%; height: 100px; font-family: 'Courier New', monospace; border: 1px solid #ddd; border-radius: 5px; padding: 10px; }
+        button { background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #218838; }
+        .results { background: #f8f9fa; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: 'Courier New', monospace; font-size: 12px; max-height: 400px; overflow-y: auto; border: 1px solid #ddd; }
+        .error { color: #dc3545; background: #f8d7da; border-color: #f5c6cb; }
+        .success { color: #155724; background: #d4edda; border-color: #c3e6cb; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        th { background-color: #667eea; color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .stats { display: flex; justify-content: space-around; background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        .stat-card { text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏦 Banking Analytics Dashboard</h1>
+        <p>Comprehensive banking data warehouse with 250+ customers, accounts, transactions, credit cards, and loans</p>
+        <p>Backend API: <a href="http://localhost:8000/docs" target="_blank" style="color: #ffd700;">http://localhost:8000/docs</a></p>
+    </div>
+
+    <div class="stats" id="statsOverview">
+        <div class="stat-card">
+            <div class="stat-number" id="customerCount">-</div>
+            <div class="stat-label">Customers</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="accountCount">-</div>
+            <div class="stat-label">Accounts</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="transactionCount">-</div>
+            <div class="stat-label">Transactions</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number" id="loanCount">-</div>
+            <div class="stat-label">Loans</div>
+        </div>
+    </div>
+
+    <div class="demo-queries">
+        <h3>🚀 Demo Queries - Click to Execute</h3>
+        
+        <h4>💰 Customer & Revenue Analytics</h4>
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT c.customer_id, c.first_name || \' \' || c.last_name as customer_name, c.customer_segment, SUM(a.balance) as total_balance FROM customers c JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_id, c.first_name, c.last_name, c.customer_segment ORDER BY total_balance DESC LIMIT 10;')">Top Customers by Balance</button>
+
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT c.customer_segment, COUNT(*) as customer_count, AVG(a.balance) as avg_balance FROM customers c LEFT JOIN accounts a ON c.customer_id = a.customer_id GROUP BY c.customer_segment ORDER BY avg_balance DESC;')">Customer Segment Analysis</button>
+
+        <button class="query-button nl" onclick="executeDemo('natural', 'Show me the most profitable customer segments based on total deposits')">💡 AI: Profitable Segments</button>
+
+        <h4>📊 Transaction & Spending Analysis</h4>
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT merchant_category, COUNT(*) as transaction_count, SUM(amount) as total_spent FROM transactions WHERE status = \'completed\' GROUP BY merchant_category ORDER BY total_spent DESC LIMIT 10;')">Top Spending Categories</button>
+
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT DATE_TRUNC(\'month\', transaction_date) as month, COUNT(*) as transaction_count, SUM(amount) as total_amount FROM transactions GROUP BY DATE_TRUNC(\'month\', transaction_date) ORDER BY month DESC LIMIT 6;')">Monthly Transaction Trends</button>
+
+        <button class="query-button nl" onclick="executeDemo('natural', 'What are the top 5 spending categories in the last 3 months?')">💡 AI: Spending Categories</button>
+
+        <h4>💳 Credit Card Analytics</h4>
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT c.customer_segment, COUNT(cc.card_id) as total_cards, AVG(cc.credit_limit) as avg_credit_limit, AVG(cc.balance) as avg_balance FROM customers c JOIN credit_cards cc ON c.customer_id = cc.customer_id WHERE cc.status = \'active\' GROUP BY c.customer_segment ORDER BY avg_balance DESC;')">Credit Card Overview</button>
+
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT c.first_name || \' \' || c.last_name as customer_name, cc.balance, cc.credit_limit, ROUND((cc.balance/cc.credit_limit)*100, 2) as utilization_pct FROM customers c JOIN credit_cards cc ON c.customer_id = cc.customer_id WHERE (cc.balance/cc.credit_limit) > 0.8 ORDER BY utilization_pct DESC LIMIT 10;')">High Credit Utilization</button>
+
+        <h4>🏠 Loan Portfolio Analytics</h4>
+        <button class="query-button" onclick="executeDemo('sql', 'SELECT loan_type, COUNT(*) as total_loans, SUM(amount) as total_amount, AVG(interest_rate * 100) as avg_interest_rate FROM loans GROUP BY loan_type ORDER BY total_amount DESC;')">Loan Portfolio Overview</button>
+
+        <button class="query-button nl" onclick="executeDemo('natural', 'Which loan types have the highest average interest rates?')">💡 AI: Loan Analysis</button>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>📊 Custom SQL Query</h3>
+            <textarea id="sqlQuery" placeholder="Enter your SQL query...">SELECT 
+    c.customer_segment,
+    COUNT(*) as customers,
+    AVG(c.annual_income) as avg_income,
+    AVG(c.credit_score) as avg_credit_score
+FROM customers c 
+GROUP BY c.customer_segment 
+ORDER BY avg_income DESC;</textarea>
+            <br><br>
+            <button onclick="executeSQL()">Execute SQL</button>
+            <div id="sqlResults" class="results"></div>
+        </div>
+
+        <div class="panel">
+            <h3>🤖 AI Natural Language Query</h3>
+            <textarea id="nlQuery" placeholder="Ask in natural language...">Show me customers with credit scores above 750 who have multiple accounts</textarea>
+            <br><br>
+            <button onclick="executeNL()">Ask AI</button>
+            <div id="nlResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        async function executeDemo(type, query) {
+            const resultsDiv = document.getElementById(type === 'sql' ? 'sqlResults' : 'nlResults');
+            const textarea = document.getElementById(type === 'sql' ? 'sqlQuery' : 'nlQuery');
+            
+            // Set the query in the textarea
+            textarea.value = query.trim();
+            
+            // Execute the query
+            if (type === 'sql') {
+                await executeSQL();
+            } else {
+                await executeNL();
+            }
+        }
+
+        async function executeSQL() {
+            const query = document.getElementById('sqlQuery').value;
+            const resultsDiv = document.getElementById('sqlResults');
+            
+            resultsDiv.innerHTML = '⏳ Executing SQL query...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/query/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        query: query, 
+                        query_type: 'sql'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.results) {
+                    let html = `<div class="success">✅ Query executed in ${data.execution_time_ms}ms</div>`;
+                    html += `<p><strong>Rows:</strong> ${data.row_count}</p>`;
+                    
+                    if (data.results.data && data.results.data.length > 0) {
+                        html += '<table>';
+                        html += '<tr>' + data.results.columns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                        data.results.data.forEach(row => {
+                            html += '<tr>' + data.results.columns.map(col => `<td>${row[col] || ''}</td>`).join('') + '</tr>';
+                        });
+                        html += '</table>';
+                    } else {
+                        html += '<p>No results found.</p>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Unknown error occurred'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function executeNL() {
+            const query = document.getElementById('nlQuery').value;
+            const resultsDiv = document.getElementById('nlResults');
+            
+            resultsDiv.innerHTML = '🤖 Processing natural language query...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/query/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        query: query, 
+                        query_type: 'natural'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.results) {
+                    let html = `<div class="success">✅ AI Query executed in ${data.execution_time_ms}ms</div>`;
+                    html += `<p><strong>Generated SQL:</strong></p><code style="background:#f8f9fa;padding:10px;display:block;border-radius:5px;">${data.generated_sql}</code>`;
+                    html += `<p><strong>Rows:</strong> ${data.row_count}</p>`;
+                    
+                    if (data.insights) {
+                        html += `<p><strong>AI Insights:</strong><br>${data.insights}</p>`;
+                    }
+                    
+                    if (data.results.data && data.results.data.length > 0) {
+                        html += '<table>';
+                        html += '<tr>' + data.results.columns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                        data.results.data.forEach(row => {
+                            html += '<tr>' + data.results.columns.map(col => `<td>${row[col] || ''}</td>`).join('') + '</tr>';
+                        });
+                        html += '</table>';
+                    } else {
+                        html += '<p>No results found.</p>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${data.error || 'Could not process natural language query'}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function loadOverviewStats() {
+            try {
+                const stats = [
+                    { query: 'SELECT COUNT(*) as count FROM customers', element: 'customerCount' },
+                    { query: 'SELECT COUNT(*) as count FROM accounts', element: 'accountCount' },
+                    { query: 'SELECT COUNT(*) as count FROM transactions', element: 'transactionCount' },
+                    { query: 'SELECT COUNT(*) as count FROM loans', element: 'loanCount' }
+                ];
+                
+                for (let stat of stats) {
+                    try {
+                        const response = await fetch(`${API_BASE}/query/execute`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                query: stat.query, 
+                                query_type: 'sql'
+                            })
+                        });
+                        
+                        const data = await response.json();
+                        if (data.success && data.results && data.results.data && data.results.data.length > 0) {
+                            document.getElementById(stat.element).textContent = data.results.data[0].count.toLocaleString();
+                        }
+                    } catch (e) {
+                        console.error(`Error loading stat for ${stat.element}:`, e);
+                        document.getElementById(stat.element).textContent = 'Error';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading overview stats:', error);
+            }
+        }
+
+        // Test API connection on page load
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                console.log('API Health:', data);
+                
+                if (data.status === 'healthy') {
+                    loadOverviewStats();
+                } else {
+                    console.warn('API not fully healthy:', data);
+                }
+            } catch (error) {
+                console.error('Failed to connect to API:', error);
+            }
+        }
+
+        // Auto-load stats on page load
+        window.onload = function() {
+            testConnection();
+        }
+    </script>
+</body>
+</html>
