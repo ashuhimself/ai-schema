@@ -1,0 +1,2 @@
+-- This file will be executed in the main database for warehouse data
+-- Vector tables are created in init_vector_tables.sql

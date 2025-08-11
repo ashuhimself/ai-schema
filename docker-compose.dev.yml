@@ -1,0 +1,41 @@
+# Development override for Docker Compose
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - LOG_LEVEL=DEBUG
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=http://localhost:8000
+    command: npm start
+    ports:
+      - "9000:3000"
+
+  # Development database with sample data
+  postgres:
+    environment:
+      POSTGRES_DB: warehouse_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./sample_data:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_dev_data:

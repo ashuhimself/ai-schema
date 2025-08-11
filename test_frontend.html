@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Copilot - Test Interface</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .panel { border: 1px solid #ddd; padding: 20px; border-radius: 8px; }
+        .panel h3 { margin-top: 0; }
+        textarea { width: 100%; height: 100px; font-family: monospace; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .results { background: #f8f9fa; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 12px; }
+        .error { color: red; }
+        .success { color: green; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>🏢 Warehouse Copilot - Test Interface</h1>
+    <p>Backend API: <a href="http://localhost:8000/docs" target="_blank">http://localhost:8000/docs</a></p>
+    
+    <div class="container">
+        <div class="panel">
+            <h3>📊 Execute SQL Query</h3>
+            <textarea id="sqlQuery" placeholder="SELECT * FROM users LIMIT 5;">SELECT name, email FROM users LIMIT 5;</textarea>
+            <br><br>
+            <button onclick="executeSQL()">Execute SQL</button>
+            <div id="sqlResults" class="results"></div>
+        </div>
+
+        <div class="panel">
+            <h3>🗄️ Database Schema</h3>
+            <button onclick="getSchema()">Load Schema</button>
+            <div id="schemaResults" class="results"></div>
+        </div>
+    </div>
+
+    <div class="container" style="margin-top: 20px;">
+        <div class="panel">
+            <h3>🤖 Natural Language Query (AI)</h3>
+            <textarea id="nlQuery" placeholder="Show me all users with their email addresses">Show me the top 5 products by price</textarea>
+            <br><br>
+            <button onclick="executeNL()">Ask AI</button>
+            <div id="nlResults" class="results"></div>
+        </div>
+
+        <div class="panel">
+            <h3>📈 Quick Stats</h3>
+            <button onclick="getStats()">Get Database Stats</button>
+            <div id="statsResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8000/api';
+
+        async function executeSQL() {
+            const query = document.getElementById('sqlQuery').value;
+            const resultsDiv = document.getElementById('sqlResults');
+            
+            resultsDiv.innerHTML = 'Executing query...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/query/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, query_type: 'sql' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.results) {
+                    let html = `<div class="success">✅ Query executed in ${data.execution_time_ms}ms</div>`;
+                    html += `<p><strong>Rows:</strong> ${data.row_count}</p>`;
+                    
+                    if (data.results.data.length > 0) {
+                        html += '<table>';
+                        html += '<tr>' + data.results.columns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                        data.results.data.forEach(row => {
+                            html += '<tr>' + data.results.columns.map(col => `<td>${row[col] || ''}</td>`).join('') + '</tr>';
+                        });
+                        html += '</table>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function executeNL() {
+            const query = document.getElementById('nlQuery').value;
+            const resultsDiv = document.getElementById('nlResults');
+            
+            resultsDiv.innerHTML = 'Processing natural language query...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/query/execute`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query, query_type: 'natural' })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.results) {
+                    let html = `<div class="success">✅ AI Query executed in ${data.execution_time_ms}ms</div>`;
+                    html += `<p><strong>Generated SQL:</strong></p><code>${data.generated_sql}</code>`;
+                    html += `<p><strong>Rows:</strong> ${data.row_count}</p>`;
+                    
+                    if (data.insights) {
+                        html += `<p><strong>AI Insights:</strong><br>${data.insights}</p>`;
+                    }
+                    
+                    if (data.results.data.length > 0) {
+                        html += '<table>';
+                        html += '<tr>' + data.results.columns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                        data.results.data.forEach(row => {
+                            html += '<tr>' + data.results.columns.map(col => `<td>${row[col] || ''}</td>`).join('') + '</tr>';
+                        });
+                        html += '</table>';
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getSchema() {
+            const resultsDiv = document.getElementById('schemaResults');
+            resultsDiv.innerHTML = 'Loading schema...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/schema/`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ include_relationships: true })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let html = `<div class="success">✅ Schema loaded successfully</div>`;
+                    html += `<p><strong>Tables:</strong> ${Object.keys(data.schema).length}</p>`;
+                    html += `<p><strong>Relationships:</strong> ${data.relationships ? data.relationships.length : 0}</p>`;
+                    
+                    html += '<h4>Tables:</h4>';
+                    Object.keys(data.schema).forEach(tableName => {
+                        const table = data.schema[tableName];
+                        html += `<p><strong>${tableName}</strong> (${table.columns.length} columns)</p>`;
+                    });
+                    
+                    if (data.relationships && data.relationships.length > 0) {
+                        html += '<h4>Relationships:</h4>';
+                        data.relationships.forEach(rel => {
+                            html += `<p>${rel.from_table}.${rel.from_column} → ${rel.to_table}.${rel.to_column}</p>`;
+                        });
+                    }
+                    
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<div class="error">❌ Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getStats() {
+            const resultsDiv = document.getElementById('statsResults');
+            resultsDiv.innerHTML = 'Loading statistics...';
+            
+            try {
+                // Get table counts
+                const queries = [
+                    'SELECT COUNT(*) as count FROM users',
+                    'SELECT COUNT(*) as count FROM products', 
+                    'SELECT COUNT(*) as count FROM orders',
+                    'SELECT COUNT(*) as count FROM reviews'
+                ];
+                
+                let html = '<div class="success">✅ Database Statistics</div>';
+                
+                for (let query of queries) {
+                    const response = await fetch(`${API_BASE}/query/execute`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: query, query_type: 'sql' })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.success && data.results.data.length > 0) {
+                        const tableName = query.match(/FROM (\w+)/)[1];
+                        const count = data.results.data[0].count;
+                        html += `<p><strong>${tableName}:</strong> ${count} records</p>`;
+                    }
+                }
+                
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">❌ Network Error: ${error.message}</div>`;
+            }
+        }
+
+        // Auto-load schema on page load
+        window.onload = function() {
+            getSchema();
+            getStats();
+        }
+    </script>
+</body>
+</html>

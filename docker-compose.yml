@@ -1,0 +1,82 @@
+services:
+  # PostgreSQL with pgvector for vector storage
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_MULTIPLE_DATABASES: warehouse,vector_store
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-multiple-databases.sh:/docker-entrypoint-initdb.d/00_init_multiple_dbs.sh
+      - ./init_vector_tables.sql:/docker-entrypoint-initdb.d/01_init_vector.sql
+      - ./banking_schema.sql:/docker-entrypoint-initdb.d/banking_schema.sql
+      - ./banking_data.sql:/docker-entrypoint-initdb.d/banking_data.sql
+      - ./init_banking_db.sql:/docker-entrypoint-initdb.d/02_init_banking.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_TYPE=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=warehouse
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - VECTOR_DB_HOST=postgres
+      - VECTOR_DB_PORT=5432
+      - VECTOR_DB_NAME=vector_store
+      - VECTOR_DB_USER=postgres
+      - VECTOR_DB_PASSWORD=password
+      - GOOGLE_API_KEY=AIzaSyDGzKk_AgIlFy3B9DnSDXZSTz5LhCdG-5U
+      - GEMINI_MODEL=gemini-1.5-flash
+      - SECRET_KEY=${SECRET_KEY}
+      - ALLOWED_ORIGINS=http://localhost:8888,http://localhost:9000,http://localhost:8000,file://*
+    volumes:
+      - ./backend:/app
+      - ./credentials:/app/credentials
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+
+  # Redis for session management (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,35 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.0.3
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+sqlalchemy==2.0.23
+alembic==1.13.1
+
+# Database connectors
+psycopg2-binary==2.9.9
+google-cloud-bigquery==3.13.0
+snowflake-connector-python==3.6.0
+redshift-connector==2.0.915
+
+# Vector database
+pgvector==0.2.4
+
+# AI and ML
+langchain==0.1.0
+langchain-google-genai==0.0.5
+langchain-community==0.0.10
+google-generativeai==0.3.2
+
+# Vector embeddings
+sentence-transformers==2.2.2
+numpy==1.24.4
+
+# Utilities
+python-dotenv==1.0.0
+httpx==0.25.2
+pandas==2.1.4
+sqlparse==0.4.4
+Jinja2==3.1.2
