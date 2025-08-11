@@ -27,7 +27,7 @@
     <div class="container">
         <div class="panel">
             <h3>📊 Execute SQL Query</h3>
-            <textarea id="sqlQuery" placeholder="SELECT * FROM users LIMIT 5;">SELECT name, email FROM users LIMIT 5;</textarea>
+            <textarea id="sqlQuery" placeholder="SELECT * FROM customers LIMIT 5;">SELECT c.first_name, c.last_name, c.customer_segment, c.annual_income, c.credit_score FROM customers c LIMIT 10;</textarea>
             <br><br>
             <button onclick="executeSQL()">Execute SQL</button>
             <div id="sqlResults" class="results"></div>
@@ -43,7 +43,7 @@
     <div class="container" style="margin-top: 20px;">
         <div class="panel">
             <h3>🤖 Natural Language Query (AI)</h3>
-            <textarea id="nlQuery" placeholder="Show me all users with their email addresses">Show me the top 5 products by price</textarea>
+            <textarea id="nlQuery" placeholder="Show me all customers with their email addresses">Show me the top 10 customers by account balance</textarea>
             <br><br>
             <button onclick="executeNL()">Ask AI</button>
             <div id="nlResults" class="results"></div>
@@ -185,10 +185,10 @@
             try {
                 // Get table counts
                 const queries = [
-                    'SELECT COUNT(*) as count FROM users',
-                    'SELECT COUNT(*) as count FROM products', 
-                    'SELECT COUNT(*) as count FROM orders',
-                    'SELECT COUNT(*) as count FROM reviews'
+                    'SELECT COUNT(*) as count FROM customers',
+                    'SELECT COUNT(*) as count FROM accounts', 
+                    'SELECT COUNT(*) as count FROM transactions',
+                    'SELECT COUNT(*) as count FROM credit_cards'
                 ];
                 
                 let html = '<div class="success">✅ Database Statistics</div>';

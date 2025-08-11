@@ -169,8 +169,8 @@ export interface ExportOptions {
 export interface ApiClient {
   executeQuery: (request: QueryRequest) => Promise<QueryResponse>;
   getSchema: () => Promise<SchemaResponse>;
-  createChatSession: () => Promise<{ session_id: string }>;
-  sendChatMessage: (sessionId: string, message: string) => Promise<ChatMessage>;
+  createChatSession: () => Promise<{ success: boolean; session_id: string }>;
+  sendChatMessage: (sessionId: string, message: string) => Promise<{ success: boolean; response: ChatMessage }>;
   getQueryHistory: (limit?: number, offset?: number) => Promise<QueryHistoryItem[]>;
 }
 
